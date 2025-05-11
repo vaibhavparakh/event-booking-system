@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Log;
 
 class EventRegistrationRequest extends FormRequest
 {
@@ -21,34 +22,34 @@ class EventRegistrationRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            'name'          => 'required|string|max:255',
-            'mobile_number' => 'required|digits_between:10,15',
-            'email'         => 'required|email|max:255',
-            'gender'        => 'required|in:male,female,other',
-            'occupation'    => 'required|string|max:255',
-            'city'          => 'required|string|max:255',
-            'state'         => 'required|string|max:255',
-            'age'           => 'required|integer|min:1|max:150',
-            'event_id'      => 'required|integer|min:1',
-        ];
+        try {
+            //code...
+            return [
+                'event_id'      => 'required|integer|min:1',
+                'attendee_id'   => 'required|integer|min:1',
+            ];
+        } catch (\Throwable $th) {
+            Log::error($th);
+        }
     }
 
     public function messages()
     {
         return [
-            'name.required' => 'Name is required!',
-            'mobile_number.required' => 'Mobile Number is required!',
-            'email.required' => 'Email is required!',
-            'gender.required' => 'Gener is required!',
-            'occupation.required' => 'Occupation is required!',
-            'city.required' => 'City is required!',
-            'state.required' => 'State is required!',
-            'age.required' => 'Age is required!',
             'event_id.required' => 'Invalid Event ID!',
-            'name.string' => 'Name must be a string!',
-            'mobile_number.digits_between' => 'Mobile Number must be between 10 and 15 digits!',
-            'email.email' => 'Email must be a valid email address!',
+            'attendee_id.required' => 'Invalid Attendee ID!',
         ];
+    }
+
+    public function response(array $errors)
+    {
+        return API::setStatusCode(422)->respondWithError($errors);
+    // yours might look more like this ->  return new JsonResponse($errors, 422);
+    }
+
+    public function forbiddenResponse()
+    {
+        return API::respondForbidden();
+    // yours might look more like this  -> return new JsonResponse('Forbidden', 403);
     }
 }

@@ -7,6 +7,7 @@ use App\Http\Requests\EventRequest;
 use Illuminate\Support\Facades\Log;
 
 use App\Models\Event;
+use App\Models\EventRegistration;
 
 class EventController extends Controller
 {
@@ -15,7 +16,7 @@ class EventController extends Controller
      */
     public function index()
     {
-        return Event::all();
+        return Event::paginate(15);
     }
 
     /**
@@ -50,17 +51,24 @@ class EventController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(StoreEventRequest $request, Event $event)
+    public function update(EventRequest $request)
     {
         try {
             $validated = $request->validated();
             
-            $event->update($validated);
-            
-            return response()->json([
-                'message' => 'Event updated successfully',
-                'event'   => $event,
-            ], 200);
+            if(isset($validated['id'])) {
+                $event = Event::find($validated['id']);
+                $event->update($validated);
+
+                return response()->json([
+                    'message' => 'Event updated successfully',
+                    'event'   => $event,
+                ], 200);
+            } else {
+                return response()->json([
+                    'message' => 'Invalid event!',
+                ], 200);
+            }
         } catch (\Throwable $th) {
             Log::error($th->getMessage());
         }
@@ -72,7 +80,10 @@ class EventController extends Controller
      */
     public function destroy(Event $event)
     {
+        // delete registrations for event and then delete event
+        EventRegistration::where('event_id', $event->id)->delete();
         $event->delete();
+
         return response()->json(['message' => 'Event deleted successfully'], 200);
     }
 }

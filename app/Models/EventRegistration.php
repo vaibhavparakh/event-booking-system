@@ -8,13 +8,13 @@ class EventRegistration extends Model
 {
     protected $fillable = ['attendee_id', 'event_id'];
 
-    public function attendee()
+    public function attendees()
     {
-        return $this->belongsTo(Attendee::class);
+        return $this->belongsTo(Attendee::class, 'attendee_id', 'id');
     }
     
-    public function event()
+    public function events()
     {
-        return $this->belongsTo(Event::class);
+        return $this->belongsTo(Event::class, 'event_id', 'id');
     }
 }

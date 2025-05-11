@@ -29,6 +29,8 @@ class EventRequest extends FormRequest
             'status'           => 'required|in:draft,published',
             'category'         => 'required|in:conference,workshop,webinar,concert',
             'mode'             => 'required|in:online,offline',
+            'country'          => 'required|string',
+            'id'               => 'integer|min:1',
         ];
     }
 }

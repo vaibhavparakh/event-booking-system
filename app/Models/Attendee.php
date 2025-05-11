@@ -10,7 +10,7 @@ class Attendee extends Model
         'name', 'mobile_number', 'email', 'date_of_birth', 'gender', 'occupation', 'city', 'state', 'age'
     ];
 
-    public function eventRegistration()
+    public function event_registration()
     {
         return $this->hasMany(EventRegistration::class);
     }

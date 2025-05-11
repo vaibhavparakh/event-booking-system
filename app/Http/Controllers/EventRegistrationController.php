@@ -6,6 +6,7 @@ use App\Http\Requests\EventRegistrationRequest;
 
 use App\Models\Attendee;
 use App\Models\EventRegistration;
+use App\Models\Event;
 
 use Log;
 
@@ -22,20 +23,51 @@ class EventRegistrationController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(EventRegistrationRequest $request): RedirectResponse
+    public function store(EventRegistrationRequest $request)
     {
         try {
             $validated = $request->validated();
+
+            // check total registered attend for an event
+            $totalAttendees = EventRegistration::where('event_id', $validated['event_id'])->count();
             
-            // create or update attendee
-            $validated['attendee_id'] = $this->storeAttendee($validated);
+            // check if attendee is present
+            $attendee = Attendee::find($validated['attendee_id']);
+            if(!isset($attendee)) {
+                return response()->json([
+                    'message' => 'This attendee does not exist!',
+                ], 201);
+            }
 
-            $registration = EventRegistration::create($validated);
+            // get event capacity and check if slots are available
+            $event = Event::find($validated['event_id']);
+            if(!isset($event)) {
+                return response()->json([
+                    'message' => 'Event is expired or invalid!',
+                ], 201);
+            }
 
-            return response()->json([
-                'message' => 'Registration created successfully',
-                'registration'   => $registration,
-            ], 201);
+            if($totalAttendees < $event->capacity) {
+                // check if already registered
+                $registeredAttendee = EventRegistration::where('event_id', $validated['event_id'])->where('attendee_id', $validated['attendee_id'])->first();
+                if(isset($registeredAttendee)) {
+                    return response()->json([
+                        'message' => 'Attendee already registered',
+                        'registration' => $registeredAttendee,
+                    ], 201);
+                }
+
+                // register attendee for event
+                $registration = EventRegistration::create($validated);
+                return response()->json([
+                    'message' => 'Registration created successfully',
+                    'registration'   => $registration,
+                ], 201);
+            } else {
+                return response()->json([
+                    'message' => 'All slots are booked',
+                ], 201);
+            }
 
         } catch (\Throwable $th) {
             Log::error($th->getMessage());
@@ -56,43 +88,22 @@ class EventRegistrationController extends Controller
      */
     public function update(EventRegistrationRequest $request, EventRegistration $registration)
     {
-        try {
-            $validated = $request->validated();
-            
-            $registration->update($validated);
-            
-            return response()->json([
-                'message' => 'Registration updated successfully',
-                'Registration' => $registration,
-            ], 200);
-        } catch (\Throwable $th) {
-            Log::error($th->getMessage());
-        }
-        return response()->json(['message' => 'Registration not found'], 404);
+        // 
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(EventRegistration $registration)
+    public function destroy($eventId, $attendeeId)
     {
-        $registration->delete();
-        return response()->json(['message' => 'Registration deleted successfully'], 200);
+        if(EventRegistration::where('event_id', $eventId)->where('attendee_id', $attendeeId)->delete()) {
+            return response()->json(['message' => 'Registration deleted successfully'], 200);
+        }
+        return response()->json(['message' => 'Registration not found'], 500);
     }
 
-    public function storeAttendee(array $data)
+    public function attendees($eventId)
     {
-        // Check if the attendee already exists
-        $attendee = Attendee::where('mobile_number', $data['mobile_number'])->first();
-
-        if ($attendee) {
-            // Update existing attendee
-            $attendee->update($data);
-            return $attendee->id;
-        }
-
-        // Create new attendee
-        $attendee = Attendee::create($data);
-        return $attendee->id;
+        return EventRegistration::with('attendees')->where('event_id', $eventId)->paginate(15);
     }
 }

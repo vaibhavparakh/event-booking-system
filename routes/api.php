@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\AttendeeController;
 use App\Http\Controllers\EventRegistrationController;
 
 Route::get('/user', function (Request $request) {
@@ -15,25 +16,32 @@ Route::get('/users', [UserController::class, 'index']);
 
 Route::controller(EventController::class)->group(function () {
     Route::get('/events', 'index');
-    Route::post('/events', 'store');
-    Route::put('/events/{event}', 'update');
-    Route::delete('/events/{event}', 'destroy');
+    Route::post('/event', 'store');
+    Route::put('/event', 'update');
+    Route::delete('/event/{event}', 'destroy');
     
     // get event by id
-    Route::get('/events/{event}', 'show');
-    
-    // get total attendees for an event
-    Route::get('/events/{event}/attendees', 'attendees');
-});
+    Route::get('/event/{event}', 'show');
+})->middleware('throttle:10,1');
 
-Route::controller(EventRegistrationController::class)->group(function () {
+Route::controller(AttendeeController::class)->group(function () {
     // get all registrations
-    Route::get('/event-registrations', 'index');
+    Route::get('/attendees', 'index');
     
     // registration CRUD operations
-    Route::post('/event-registrations', 'store');
-    Route::delete('/event-registrations/{registration}', 'destroy');
+    Route::post('/attendee/register', 'store');
+    Route::put('/attendee', 'update');
+    Route::delete('/attendee/{attendee}', 'destroy');
     
-    // get user registrations
-    Route::get('/my-events/{mobile_number}', 'myEvents');
-});
+    // get attendee by id
+    Route::get('/attendee/{attendee}', 'show');
+})->middleware('throttle:10,1');
+
+Route::controller(EventRegistrationController::class)->group(function () {
+    // registration CRUD operations
+    Route::post('/event/attendee/register', 'store');
+    Route::delete('/event/attendee/remove/{event}/{attendee}', 'destroy');
+    
+    // get total attendees for an event
+    Route::get('/event/attendees/{event}', 'attendees');
+})->middleware('throttle:10,1');
