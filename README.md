@@ -2,6 +2,10 @@
 
 Event booking system is used to book events tickets.
 
+# Postman Collection Link
+
+https://documenter.getpostman.com/view/44838918/2sB2jAa7va
+
 ## Installation
 
 Use composer, PHP 8.2 or above and node to run this project.
