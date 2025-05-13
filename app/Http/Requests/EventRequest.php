@@ -16,7 +16,7 @@ class EventRequest extends FormRequest
         return [
             'title'            => 'required|string|max:255',
             'description'      => 'required|string',
-            'from_date_time'   => 'required|date',
+            'from_date_time'   => 'required|date|after:today',
             'to_date_time'     => 'required|date|after:from_date_time',
             'venue'            => 'required|string|max:255',
             'location_url'     => 'required|url|max:500',
